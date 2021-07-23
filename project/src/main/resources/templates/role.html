@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>role</title>
+    <script type="text/javascript" src="../js/layui-v2.5.7/layui/layui.js"></script>
+    <link rel="stylesheet" href="../js/layui-v2.5.7/layui/css/layui.css"/>
+</head>
+<style type="text/css">
+    /*.layui-input-block {*/
+    /*    width: 100px;*/
+    /*    margin-left: 110px;*/
+    /*    min-height: 36px;*/
+    /*    margin-left: 58px;*/
+    /*    min-height: 20px;*/
+    /*}*/
+    /*.layui-form-label {*/
+    /*    padding: 9px 15px;*/
+    /*    padding: 5px 15px;*/
+    /*    width: 80px;*/
+    /*    font-weight: 400;*/
+    /*    padding: 5px 15px;*/
+    /*    width: 56px;*/
+    /*    font-weight: 390;*/
+    /*}*/
+    /*.layui-input, .layui-select, .layui-textarea {*/
+    /*    height: 38px;*/
+    /*    line-height: 1.3;*/
+    /*    border-width: 1px;*/
+    /*    height: 29px;*/
+    /*    line-height: 11.3;*/
+    /*    border-width: 0px;*/
+    /*}*/
+    /*.layui-input, .layui-textarea {*/
+    /*    width: 100%;*/
+    /*    padding-left: 10px;*/
+    /*    width: 100%;*/
+    /*    padding-left: 0px;*/
+    /*}*/
+
+</style>
+
+
+<body>
+<script type="text/html" id="toolbarDemo">
+    <form class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色名</label>
+            <div class=" layui-input-inline">
+                <input type="text" name="keywords" required   placeholder="请输入" autocomplete="off" class="layui-input">
+            </div>
+            <button class="layui-btn" lay-submit lay-filter="formDemo">查询</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </form>
+</script>
+<div id="data" style="display: none">
+    <div class="layui-input-inline" style="padding-top: 5px">
+        <label class="layui-form-label" style="padding-left: 0px;padding-right: 0px">角色名称</label>
+        <div class="layui-input-block" >
+            <input type="text" name="roleName"  autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div id="transfer" class="demo-transfer" style="padding-left: 11px;padding-top: 5px"></div>
+</div>
+
+<table class="layui-hide" id="table" lay-filter="table"></table>
+<script>
+    layui.use(['transfer','table','layer','form'], function(){
+        var table = layui.table;
+        var lar = layui.layer;
+        var form = layui.form;
+        var $ = layui.jquery;
+        var transfer = layui.transfer;
+
+        var keywords ;
+//初始化数据表格
+        var roleTable = table.render({
+            elem: '#table'
+            ,url:'/role/table'
+            ,toolbar: '#toolbarDemo'
+            ,cols: [
+                [
+                    {field:'roleId', width:80, title: 'ID', sort: true}
+                    ,{field:'roleName', width:80, title: '角色名称'}
+                    ,{field:'description',width:80,title:'描述'}
+                ]
+            ]
+            ,page: true
+        });
+
+
+
+
+        table.on('row(table)', function(obj){
+            let roleAllPermissionInfo;
+            let role = obj.data;
+            let rolePermission = {"roleId":role.roleId,"insert":[],"delete":[]};
+            let rolePermissionIds;
+            let buf;
+            form.val("form", data);
+            $.ajax({
+                url:"/permission/allInfo",
+                data:{"sign":false},
+                success:function (data) {
+                    roleAllPermissionInfo = data;
+//请求当前角色所持有的权限id
+//穿梭框数据注入
+                    $.ajax({
+                        url: "/role/permissionIds",
+                        data: {"roleId": role.roleId},
+                        success: function (ids) {
+                            buf = rolePermissionIds = ids;
+                            transfer.render({
+                                elem: '#transfer'  //绑定元素
+                                , data: roleAllPermissionInfo
+                                ,title:['未拥有权限','拥有权限']
+                                , parseData: function (res) {
+                                    return {
+                                        "value": res.permissionId //数据值
+                                        , "title": res.permissionName //数据标题
+                                        // ,"disabled": res.disabled  //是否禁用
+                                        // ,"checked": res.checked //是否选中
+                                    }
+                                }
+                                , value: ids, //右侧数据,
+                                id: 'transferId'
+                                //数据发送
+                                , onchange: function (data, index) {
+                                    //data //得到当前被穿梭的数据
+                                    //index //如果数据来自左边，index 为 0，否则为 1
+                                    //ids 做一个对比
+
+                                }
+                            });
+                        }
+                    });
+//穿梭框数据重载
+                    function transferReload(){
+                        transfer.reload('transferId',
+                            {
+                                data: roleAllPermissionInfo
+                                ,title:['未拥有权限','拥有权限']
+                                , parseData: function (res) {
+                                    return {
+                                        "value": res.permissionId //数据值
+                                        , "title": res.permissionName //数据标题
+                                        // ,"disabled": res.disabled  //是否禁用
+                                        // ,"checked": res.checked //是否选中
+                                    }
+                                }
+                                ,value:buf
+                            });
+                    }
+
+//打开弹出层
+                    lar.open({
+                        type: 1,
+                        area: ['500px', '510px'],
+                        btn: ['提交数据', '重置数据'],
+                        content: $('#data'),
+//穿梭框数据提交
+                        yes: function (index, layero) {
+                            var getData = transfer.getData('transferId');
+                            let rightData = new Array();
+                            //获取右侧数据id值
+                            for (v = 0; v < getData.length; v++) {
+                                rightData.push(getData[v].value);
+                            }
+//判断穿梭框数据是否发生变化
+                            let sign = false;
+                            let l1 = rolePermissionIds.length;
+
+                            let l2 = rightData.length;
+//提取数据分组
+                            //本身无权限数据无需发送请求
+                            if(l1===0&&l2===0){
+                                return;
+                            }
+                            //该角色没有权限数据将右侧数据全部添加
+                            else if(l1===0){
+                                sign = true;
+                                rolePermission.insert = rightData;
+                            }
+                            //右侧无数据,删除原有数据
+                            else if(l2===0){
+                                sign = true;
+                            }
+//分离新增和删除数据
+                            else if(l2 != 0) {
+                                let i = 0;
+
+                                let add;
+
+//原有数据
+
+                                for (i; i < l1; i++) {
+//穿梭框右侧数据
+
+                                    for (j = 0; j < l2; j++) {
+                                        if (rightData[j] === rolePermissionIds[i]) {
+                                            //记录数据索引
+                                            rightData.splice(j, 1);
+                                            rolePermissionIds.splice(i, 1);
+                                            if (l1 == 0 || l2 == 0) {
+                                                break;
+                                            } else {
+                                                i--;
+                                                l1--;
+                                                l2--;
+                                            }
+                                            if(sign)
+                                            break;
+                                        } else {
+//有数据变动再修改sign
+                                            sign = true;
+                                        }
+                                    }
+                                }
+                                rolePermission.insert = rightData;
+                                rolePermission.delete = rolePermissionIds;
+                            } else {
+                                sign = true;
+                            }
+                            if (sign) {
+                                $.ajax({
+                                    url: "/user/update",
+                                    data: rolePermission,
+                                    traditional: true,
+                                    success: function () {
+                                        transfer.reload('transferId');
+                                    },
+                                    error:function () {
+                                        transferReload();
+                                    }
+                                });
+                            }
+                            layer.close(index);
+                        },
+                        btn2:function (index, layero) {
+                            transferReload();
+                            return false;
+                        }
+                    });
+                }
+            });
+
+        });
+
+        form.on('submit(formDemo)',function (data) {
+            keywords = data.field;
+            console.debug(keywords);
+            roleTable.reload({
+                where:keywords,
+                page: {curr:1}
+            });
+            // $.ajax({
+            //     url: "/role/search",
+            //     traditional:true,
+            //     type: 'get',
+            //     data: data.field,
+            //     beforeSend: function () {
+            //
+            //     },
+            //     success: function () {
+            //         return false;
+            //     }
+            // });
+            return false;
+        });
+    });
+</script>
+
+</body>
+</html>

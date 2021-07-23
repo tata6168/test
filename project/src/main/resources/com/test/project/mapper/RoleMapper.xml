@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.test.project.mapper.RoleMapper">
+<!--List<String> getSn(Integer roleId);-->
+    <select id="getSn" resultType="String" parameterType="Integer">
+        SELECT p.sn FROM role_permisison rp JOIN t_permission p ON rp.permission_id = p.permission_id
+        WHERE r.role_id = #{roleId};
+    </select>
+    <insert id="insert" parameterType="RolePermissionId" keyProperty="roleId" keyColumn="role_id" useGeneratedKeys="true">
+        INSERT INTO t_role(role_name) VALUES (#{roleName});
+    </insert>
+    <!-- 为角色添加权限 -->
+    <insert id="roleAddPermission" parameterType="RolePermissionId">
+        INSERT INTO role_permission(role_id,permission_id)
+        VALUES
+        <foreach collection="permissionIds" item="i" separator="," close=";">
+            (#{role_id},#{i})
+        </foreach>
+    </insert>
+    <select id="searchPage" parameterType="Query" resultType="Role">
+        SELECT role_id AS roleId,role_name AS roleName,description FROM t_role
+         <where>
+             <if test="keywords != '' and keywords !=null">
+                 role_name LIKE CONCAT('%',#{keywords},'%')
+             </if>
+         </where>
+         LIMIT #{page},#{limit};;
+    </select>
+
+    <delete id="deleteRole" parameterType="Integer">
+        DELETE FROM role_permission WHERE role_id = #{rolId};
+        DELETE FROM t_role WHERE role_id = #{roleId};
+    </delete>
+    <delete id="deleteAllPermission" parameterType="Integer">
+        DELETE FROM role_permission WHERE role_id = #{roleId};
+    </delete>
+    <select id="count" resultType="Integer">
+        SELECT COUNT(role_id) FROM t_role;
+    </select>
+    <!--List<Integer> searchPermissionIds(Integer id);-->
+    <select id="searchPermissionIds" resultType="Integer" parameterType="Integer">
+        SELECT permission_id FROM role_permission WHERE role_id = #{roleId};
+    </select>
+    <insert id="insertPermission">
+        INSERT INTO role_permission(role_id,permission_id) VALUES
+        <foreach collection="insert" item="i" separator=",">
+            (#{roleId},#{i})
+        </foreach>
+    </insert>
+    <delete id="deletePermission">
+        DELETE FROM role_permission WHERE role_id = #{roleId} AND permission_id IN
+        <foreach collection="delete" separator="," item="i" open="(" close=");">
+            #{i}
+        </foreach>
+    </delete>
+    <!--List<Role> searchAll();-->
+    <select id="searchAll" resultType="Role">
+        SELECT role_id AS roleId,role_name AS roleName FROM t_role;
+    </select>
+</mapper>

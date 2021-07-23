@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User</title>
+    <script type="text/javascript" src="../../layui-v2.6.8/layui/layui.js"></script>
+    <link rel="stylesheet" href="../../layui-v2.6.8/layui/css/layui.css">
+</head>
+<body>
+    <table id="uTableId" class="layui-table-view" lay-filter="uTFilter"></table>
+    <script type="text/html" id="topTool">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">?</button>
+    </script>
+    <script type="text/html" id="rightTool">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="transfer">角色编辑</a>
+    </script>
+
+    <div id="editPopup" style="display: none">
+        <form class="layui-form" lay-filter="formFilter">
+            <input name="userId" style="display: none" type="text">
+            <div class="layui-form-item">
+                <label class="layui-form-label">用户名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="userName" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">电话号码</label>
+                <div class="layui-input-block">
+                    <input type="text" name="phoneNum" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="transferPopup" style="display: none">
+        <div id="transfer"></div>
+    </div>
+</body>
+<script>
+    layui.use(['form','table','layer','transfer'],function () {
+        let table = layui.table;
+        let transfer = layui.transfer;
+        let form = layui.form;
+        let layer = layui.layer;
+        let $ = layui.jquery;
+        table.render({
+            id:'uTableId',
+            url:'/shiro/userAll',
+            elem:'#uTableId',
+            page:true,
+            request:{pageName:'start'},
+            toolbar:'#topTool',
+            cols:[
+                [
+                    {field:'userId',title:'id',unresize:true,fixed:'left'},
+                    {field:'userName',title:'用户名'},
+                    {field:'phoneNum',title:'电话号码'},
+                    {field:'registerTime',title:'注册时间'},
+                    {fixed:'right',title:'操作',width:'150',toolbar:'#rightTool'}
+                ]
+            ],
+            cellMinWidth:70
+        });
+        table.on('tool(uTFilter)',function(obj){
+            let event = obj.event;
+            let data = obj.data;
+            switch (event) {
+                case 'edit':
+                    let i1;
+                    form.val('formFilter',data);
+                    layer.open({
+                        type:1,
+                        content:$('#editPopup'),
+                        btn:['提交'],
+                        cancel:function () {
+                            form.val('formFilter',{userId:null,userName:null,phoneNum:null});
+                        },
+                        yes:function(index){
+                            let val = form.val('formFilter');
+                            let sign;
+                            for(let key in val){
+                                if(key!='userId'&&data[key]===val[key]){
+                                    console.debug('delete:'+key);
+                                    delete val[key];
+                                }else {
+                                    if(!((data[key]===null&&val[key]==='')||(data[key]===''&&val[key]===null))) {
+                                        sign = true;
+                                    }else {
+                                        console.debug('insert:' + key + data[key] + '/' + val[key])
+                                    }
+                                }
+                            }
+                            if(sign){
+                                $.ajax({
+                                    data:val,
+                                    url:'/shiro/user/insertOrUpdate',
+                                    type:'get',
+                                    success:function (data) {
+                                        table.reload('uTableId')
+                                    },error:function(){
+
+                                    }
+                                });
+                            }
+                            layer.close(i1);
+                        }
+                    });
+                    break;
+                case 'transfer':
+                    let transferData;
+                    let transferSign;
+                    $.ajax({
+                       url:'/shiro/userRoleTransfer',
+                       data:{userId:data.userId},
+                       type:'get',
+                       async:false,
+                       success:function(data){
+                           transferData = data;
+                       }
+                    });
+                    transfer.render({
+                        elem:'#transfer'
+                        ,id:'transferId'
+                        ,data:transferData.nameIdList
+                        ,value:transferData.ids
+                        ,onchange:function () {
+                            transferSign = true;
+                        }
+                        ,parseData: function(res){
+                            return {
+                                "value": res.id //数据值
+                                ,"title": res.name //数据标题
+                                // ,"disabled": res.disabled  //是否禁用
+                                // ,"checked": res.checked //是否选中
+                            }
+                        }
+                    });
+                    layer.open({
+                        elem:'#transferPopup',
+                        content:$('#transferPopup'),
+                        type:1,
+                        title:data.userName,
+                        btn:['submit'],
+                        area:['600px','500px'],
+                        yes:function(index){
+                            if(!transferSign) return;
+                            let newData = [];
+                            for (let i = 0; i < transfer.getData('transferId').length; i++) {
+                                newData.push(transfer.getData('transferId')[i].value);
+                            }
+                            let equals = transferResultEquals(data.userId,newData,transferData.ids);
+                            console.debug('new:'+equals.insert);
+                            console.debug('old:'+equals.delete);
+                            if(equals.sign!=null){
+                                $.ajax({
+                                   traditional: true,
+                                   url:'/shiro/user/updateRole',
+                                   data:equals,
+                                   success:function(data){
+                                        layer.close(index);
+                                   }
+                                });
+                            }
+                        },
+                        cancel:function(){
+
+                        }
+                    });
+                    break;
+            }
+        });
+    });
+    function transferResultEquals (mainId,newData,oldData){
+        let result = {'mainId':mainId,'sign': null};
+        let nl = newData.length;
+        let ol = oldData.length;
+        if(nl===0&&ol===0){
+        }else if(nl!=0&&ol===0){
+            result['insert'] = newData;
+            result.sign = 1;
+        }else if(nl===0&&ol!=0){
+            result['delete'] = oldData;
+            result.sign=-1;
+        }else {
+            for (let i = 0; i < nl; i++) {
+                for (let j = 0; j < ol; j++) {
+                    if(newData[i]===oldData[j]){
+                        console.debug("==:"+newData[i]+"/"+oldData[j]);
+                        newData.splice(i,1);
+                        oldData.splice(j,1);
+                        i--;
+                        j--;
+                        ol--;
+                        nl--;
+                        break;
+                    }else {
+                        console.debug("!=:"+newData[i]+"/"+oldData[j])
+                    }
+                }
+            }
+            if(nl===0&&ol===0){
+            }else if(nl!=0&&ol===0){
+                result['insert'] = newData;
+                result.sign = 1;
+            }else if(nl===0&&ol!=0) {
+                result['delete'] = oldData;
+                result.sign = -1;
+            }else {
+                result['insert'] = newData;
+                result['delete'] = oldData;
+                result.sign = 0;
+            }
+        }
+        return result;
+    }
+</script>
+</html>

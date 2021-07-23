@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+    <script type="text/javascript" src="../js/layui-v2.5.7/layui/layui.js"></script>
+    <link rel="stylesheet" href="../js/layui-v2.5.7/layui/css/layui.css"/>
+</head>
+
+<body>
+
+<div id="popover" style="display: none">
+    <div id="transfer" class="demo-transfer" ></div>
+</div>
+<table class="layui-hide" id="test" lay-filter="data"></table>
+<script>
+    layui.use(['table','form','layer','transfer'], function(){
+        var layer = layui.layer;
+        var table = layui.table;
+        var form = layui.form;
+        var $ = layui.jquery;
+        var transfer = layui.transfer;
+        table.render({
+            elem: '#test'
+            ,url:'/user/table'
+            ,cols: [
+                [
+                {field:'userId', width:80, title: 'ID', sort: true}
+                ,{field:'userName', width:80, title: '用户名'}
+            ]
+            ]
+            ,page: true
+        });
+//数据表格行单击，修改权限
+        table.on('row(data)',function (obj) {
+            let row = obj.data;
+            let updateData = {'primaryId':row.userId,'insert':[],'delete':[]};
+//穿梭框数据请求
+            $.ajax({
+                url:'/user/searchRole',
+                type:'post',
+                data:{"userId":row.userId},
+                success:function (data) {
+                    let userRoleIds = data.userRoleIds;
+//数据请求成功加载穿梭框
+                    transfer.render({
+                        elem: '#transfer'
+                        ,data: data.roleList
+                        ,parseData: function(res){
+                            return {
+                                "value": res.roleId //数据值
+                                ,"title": res.roleName //数据标题
+                            }
+                        }
+                        ,value: data.userRoleIds
+                        ,id:'roleIds'
+                    });
+                    layer.open({
+                        type: 1,
+                        area: ['500px', '510px'],
+                        btn: ['提交数据', '重置数据'],
+                        content: $('#popover'),
+                        yes:function (index) {
+                            let right = transfer.getData('roleIds');
+                            console.debug(right);
+                            let array = new Array();
+                            let sign = false;
+                            for (let i = 0; i < right.length; i++) {
+                                array.push(right[i]['value']);
+                            }
+                            let length = array.length;
+                            if(right.length!=0){
+                                //本身就不存在数据
+                                if(userRoleIds.length==0){
+                                    updateData.insert = array;
+                                    sign=true;
+                                }else {
+                                    //循环分组数据
+                                    for (let j = 0; j < length; j++) {
+                                        for (let k = 0; k < userRoleIds.length; k++) {
+                                            if(array[j]==userRoleIds[k]){
+                                                array.splice(j,1);
+                                                userRoleIds.splice(k,1);
+                                                if(length!=0) {
+                                                    j--;
+                                                    length--;
+                                                }
+                                                break;
+                                            }else {
+                                                sign=true;
+                                            }
+                                        }
+                                    }
+                                    //数据发生变换
+
+                                    if(sign){
+                                        updateData.insert = array;
+                                        updateData.delete = userRoleIds;
+                                    }
+                                }
+                            }else {
+                                //无数据调动
+                                if (userRoleIds.length == 0) {
+                                    return;
+                                } else {
+                                    //删除数据
+                                    sign=true;
+                                }
+                            }
+                            if(sign){
+                                $.ajax({
+                                    url:'/user/updateRole',
+                                    traditional: true,
+                                    data:updateData,
+                                    success:function (data) {
+
+                                    }
+                                });
+                            }
+                        },
+                        btn2:function (index) {
+
+                        }
+                    });
+                }
+            });
+
+
+
+
+        });
+
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/base/base.iml" filepath="$PROJECT_DIR$/base/base.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jvisualvm/jvisualvm.iml" filepath="$PROJECT_DIR$/jvisualvm/jvisualvm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/liuyan/liuyan.iml" filepath="$PROJECT_DIR$/liuyan/liuyan.iml" />
+      <module fileurl="file://$PROJECT_DIR$/oracle/oracle.iml" filepath="$PROJECT_DIR$/oracle/oracle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/project/project.iml" filepath="$PROJECT_DIR$/project/project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/start/start.iml" filepath="$PROJECT_DIR$/start/start.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tata/tata.iml" filepath="$PROJECT_DIR$/tata/tata.iml" />
+      <module fileurl="file://$PROJECT_DIR$/test.iml" filepath="$PROJECT_DIR$/test.iml" />
+    </modules>
+  </component>
+</project>

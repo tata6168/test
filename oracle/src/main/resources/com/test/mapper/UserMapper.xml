@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.test.mapper.UserMapper">
+   <insert id="insert" parameterType="User">
+       INSERT INTO t_user(user_id,user_name,portrait,password,register_time)
+       VALUES(
+       user_id_squence.NEXTVAL,
+        #{userName},
+        #{portrait},
+        #{password},
+        sysdate
+       )
+   </insert>
+    <update id="update" parameterType="User">
+        UPDATE t_user
+        <set>
+            <if test="userName != null and userName != ''">
+                user_name = #{userName},
+            </if>
+            <if test="portrait != null and portrait != ''">
+                portrait = #{portrait},
+            </if>
+        </set>
+        WHERE user_id = #{userId}
+    </update>
+    <delete id="delete" parameterType="java.lang.Number">
+        DELETE FROM t_user WHERE user_id = #{userId}
+    </delete>
+    <select id="count" resultType="Long">
+        SELECT COUNT(*) FROM t_user
+    </select>
+    <insert id="autoIncrement">
+        CREATE TABLE A(
+        ID NUMBER(1,1)
+        )
+    </insert>
+</mapper>

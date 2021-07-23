@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>register</title>
+    <script type="text/javascript" src="/js/layui-v2.5.7/layui/layui.js"></script>
+    <link rel="stylesheet" href="/js/layui-v2.5.7/layui/css/layui.css"/>
+</head>
+<body>
+<form class="layui-form" action="">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">用&nbsp;户&nbsp;名</label>
+            <div class="layui-input-block">
+                <input type="text" name="userName" lay-verify="title" autocomplete="off" placeholder="用户名" class="layui-input">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">密&emsp;&emsp;码</label>
+            <div class="layui-input-block">
+                <input type="password" name="password" lay-verify="title" autocomplete="off" placeholder="密码" class="layui-input">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">确认密码</label>
+            <div class="layui-input-block">
+                <input type="password" name="password" lay-verify="title" autocomplete="off" placeholder="密码" class="layui-input">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">手&nbsp;机&nbsp;号</label>
+            <div class="layui-input-block">
+                <input type="text" name="phoneNum" lay-verify="title" autocomplete="off" placeholder="手机号" class="layui-input">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="formDemo">注册</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+</body>
+<script>
+    layui.use(['form'],function () {
+        let $ = layui.jquery;
+        let form = layui.form;
+        form.on('submit(formDemo)',function (data) {
+            $.ajax({
+                url: "/user/register",
+                type: 'get',
+                data: data.field,
+                beforeSend: function () {
+
+                },
+                success: function () {
+                    return false;
+                }
+            });
+           return false;
+        });
+
+    });
+</script>
+</html>

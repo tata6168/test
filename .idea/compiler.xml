@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="jvisualvm" />
+        <module name="project" />
+        <module name="liuyan" />
+        <module name="start" />
+        <module name="base" />
+        <module name="oracle" />
+        <module name="tata" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="base" target="1.8" />
+      <module name="jvisualvm" target="1.8" />
+      <module name="liuyan" target="1.8" />
+      <module name="oracle" target="1.8" />
+      <module name="project" target="1.8" />
+      <module name="start" target="1.8" />
+      <module name="tata" target="1.8" />
+      <module name="test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="base" options="-parameters" />
+      <module name="jvisualvm" options="-parameters" />
+      <module name="liuyan" options="-parameters" />
+      <module name="oracle" options="-parameters" />
+      <module name="project" options="-parameters" />
+      <module name="start" options="-parameters" />
+      <module name="tata" options="-parameters" />
+    </option>
+  </component>
+</project>

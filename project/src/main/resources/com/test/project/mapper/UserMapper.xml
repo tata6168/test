@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.test.project.mapper.UserMapper">
+    <select id="table" parameterType="Query" resultType="User">
+        SELECT user_id AS userId,
+            user_name AS userName,
+            portrait_path AS portraitPth
+         FROM t_user LIMIT #{page},#{limit};
+    </select>
+    <select id="count" resultType="Long">
+        SELECT COUNT(*) FROM t_user;
+    </select>
+    <insert id="insert" parameterType="User">
+        INSERT INTO t_user(user_name,register_time,password,portrait_path) VALUES (#{userName},now(),#{password},#{portraitPath})
+    </insert>
+    <update id="update" parameterType="User">
+        UPDATE t_user
+        SET
+        <set>
+            <if test="userName!=null and userName!=''">
+                user_name = #{userName},
+            </if>
+            <if test="portraitPath!=null and portraitPath!=null">
+                portrait_path = #{portraitPath},
+            </if>
+        </set>
+        WHERE user_id = #{userId};
+    </update>
+    <delete id="delete" parameterType="Long">
+        DELETE FROM t_user WHERE user_id = #{userId};
+    </delete>
+    <select id="multipleSearch" parameterType="Query">
+        SELECT
+        user_id AS userId,
+        user_name AS userName,
+        portait_path AS portraitPth
+         FROM t_user WHERE
+        <where>
+            <if test="keywords !=null and keywords != ''">
+                and user_name LIKE CANCAT(#{keywords},'%')
+            </if>
+            <if test="startTime!=null and endTime!=null">
+                and register_time BETWEEN #{startTime} AND #{endTime}
+            </if>
+        </where>
+        ;
+    </select>
+    <select id="searchByName" parameterType="String" resultType="User">
+        SELECT user_id AS userId,user_name AS userName,portrait_path AS portraitPath
+        FROM t_user
+        WHERE user_name = #{userName};
+
+    </select>
+    <select id="userGetPermission" parameterType="Long" resultType="String">
+        SELECT p.sn FROM
+        user_role ur
+        JOIN t_role r ON ur.role_id = r.role_id
+        JOIN role_permission rp ON r.role_id = rp.role_id
+        JOIN t_permission p ON p.permission_id = rp.permission_id
+        WHERE ur.user_id = #{userId};
+    </select>
+    <select id="userGetRoleId" resultType="Integer" parameterType="Long">
+        SELECT role_id FROM user_role WHERE user_id = #{userId};
+    </select>
+    <!--
+    void deleteRole(Number primaryId, List<Number> delete);
+
+    void insertRole(Number primaryId, List<Number> insert);
+
+    void deleteAllRole(Number primaryId);
+    -->
+    <delete id="deleteRole" >
+        DELETE  FROM user_role WHERE user_id = #{primaryId} AND role_id IN
+        <foreach collection="delete" separator="," open="(" close=")" item="i">
+            #{i}
+        </foreach>
+    </delete>
+    <delete id="deleteAllRole" parameterType="java.lang.Number">
+        DELETE FROM user_role WHER user_id = #{primary}
+    </delete>
+    <insert id="insertRole">
+        INSERT INTO user_role(user_id,role_id) VALUES
+        <foreach collection="insert" separator="," item="i">
+            (#{primaryId},#{i})
+        </foreach>
+    </insert>
+</mapper>

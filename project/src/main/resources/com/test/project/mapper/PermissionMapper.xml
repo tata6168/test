@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.test.project.mapper.PermissionMapper">
+    <insert id="insert" parameterType="Permission">
+        INSERT INTO permission(sn,path,permission_name) VALUES (#{sn},#{path},#{permissionName});
+    </insert>
+    <delete id="delete" parameterType="Long">
+        DELETE FROM permission WHERE permission_id = #{permissionId};
+    </delete>
+    <update id="update" parameterType="Permission">
+        UPDATE permission SET
+        <set>
+            <if test="permissionName!=null and permissionName!=''">
+                permission_name = #{permissionName},
+            </if>
+            <if test="path != null and path != '' ">
+                path = #{path},
+            </if>
+            <if test="sn != null and sn !=''">
+                sn = #{sn},
+            </if>
+        </set>
+        WHERE permission_id = #{permissionId};
+    </update>
+    <select id="batchSearch" parameterType="java.util.ArrayList" resultType="Permission">
+        SELECT permission_name AS permissionName,path,sn,permission_id AS permissionId
+        FROM permission
+        WHERE permission_id IN
+        <foreach collection="paramName" open="(" separator="," close=")" item="i">
+            #{i}
+        </foreach>;
+    </select>
+    <!--List<Permission> getAll();-->
+    <select id="getAllSimple" resultType="Permission">
+        SELECT permission_id AS permissionId, permission_name AS permissionName FROM t_permission;
+    </select>
+    <!--List<Permission> getAllDetail();-->
+    <select id="getAllDetail" resultType="Permission">
+        SELECT permission_id AS permissionId,permission_name AS permissionName,sn,path
+        FROM t_permission;
+    </select>
+</mapper>

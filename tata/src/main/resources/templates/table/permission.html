@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Permission</title>
+    <script type="text/javascript" src="../../layui-v2.6.8/layui/layui.js"></script>
+    <link rel="stylesheet" href="../../layui-v2.6.8/layui/css/layui.css">
+</head>
+<body >
+    <table id="pTable" lay-filter="tFilter"></table>
+    <div id="editPopup" style="display: none">
+        <form class="layui-form" lay-filter="fFilter">
+            <input name="permissionId" style="display: none" type="text">
+            <div class="layui-form-item">
+                <label class="layui-form-label">权限名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="permissionName" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">path</label>
+                <div class="layui-input-block">
+                    <input type="text" name="path" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">sn</label>
+                <div class="layui-input-block">
+                    <input type="text" name="sn" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+        </form>
+    </div>
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="forbidden">禁用</a>
+    </script>
+    <script type="text/html" id="switchTpl">
+        <input type="checkbox" name="status" value="{{d.permissionId}}" lay-skin="switch" lay-text="启用|禁用" lay-filter="sexDemo" {{d.status ? "checked" :""}} >
+    </script>
+</body>
+<script type="text/javascript">
+
+    layui.use(['table','layer','form'],function () {
+        let table = layui.table;
+        let form = layui.form;
+        let layer = layui.layer;
+        let $ = layui.jquery;
+//权限状态选择
+        form.on('switch(sexDemo)', function(obj){
+            let value = this.value;
+            let checked = obj.elem.checked;
+            $.ajax({
+                data:{permissionId:value,status:checked},
+                url:'/shiro/permission/sst',
+                type:'get',
+                success:function () {
+                    layer.msg('success');
+                }
+            })
+        });
+
+        table.render({
+            id:'pTableId',
+            cellMinWidth: 80,
+            elem:'#pTable',
+            url:'/shiro/permissionAll',
+            page:true,
+            request:{pageName:'start'},
+            cols:[
+                [
+                    {field: 'permissionId', title: 'ID', width:80, sort: true, fixed: 'left',unresize: true}
+                    ,{field: 'permissionName', title: '权限名'}
+                    ,{field: 'path', title: '路径'}
+                    ,{field: 'sn', title: 'sn'}
+                    ,{field:'status', title:'状态',width:80, templet: '#switchTpl',unresize: true}
+                    ,{fixed: 'right', title:'操作',width:130, toolbar: '#barDemo',unresize:true}
+                ]
+            ]
+        });
+        table.on('tool(tFilter)',function (obj) {
+                let event = obj.event;
+                let data = obj.data;
+                switch (event) {
+                    case 'forbidden':
+                        layer.open({
+                            type: 1,
+                            closeBtn:0,
+                            content: '<div>确认禁用该权限吗</div>',
+                            btn:['确认','取消'],
+                            yes:function(a,b){
+                                // $.ajax({
+                                //    data:{permissionId:data.permissionId},
+                                //    url:'/shiro/',
+                                // });
+                            },
+                            btn2:function(a,b){
+                                console.debug('no')
+                            }
+                        });
+                        break;
+                    case 'edit':
+                        form.val('fFilter',data);
+                        let popupPIndex = layer.open({
+                            title:data.permissionName,
+                            type:1,
+                            content:$('#editPopup'),
+                            btn:['提交'],
+                            yes:function (a,b) {
+                                let sign = false;
+                                let val = form.val('fFilter');
+                                if(data.sn===val.sn) delete val.sn;
+                                if(data.permissionName === val.permissionName) delete  val.permissionName;
+                                delete val.path;
+                                for(let i in val){
+                                    if(i!='permissionId')
+                                        if(val[i]!=null)
+                                            sign=true;
+                                }
+                                if(sign) {
+                                    $.ajax({
+                                        data: val,
+                                        url: '/shiro/permission/update',
+                                        success: function (data) {
+                                            table.reload('pTableId');
+                                            layer.msg(data.msg);
+                                            layer.close(popupPIndex);
+                                        }
+                                    });
+                                }else {
+                                    layer.msg("未发现修改数据");
+                                    layer.close(popupPIndex);
+                                }
+                            }
+                        });
+                        break;
+                }
+
+        });
+    });
+</script>
+</html>

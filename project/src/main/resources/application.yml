@@ -1,0 +1,21 @@
+server:
+  port: 8079
+spring:
+  data:
+    elasticsearch:
+      cluster-nodes: 127.0.0.1:9300
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.1.107:3306/work?serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true&allowMultiQueries=true
+    password: 123456
+    username: liuyan
+  thymeleaf:
+    cache: false
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: com/test/project/mapper/*Mapper.xml
+  type-aliases-package: com.test.project.entity,com.test.project.util,com.test.project.query
+es:
+  ip: 127.0.0.1
+  port: 9300

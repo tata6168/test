@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript" src="../js/layui-v2.5.7/layui/layui.js"></script>
+    <link rel="stylesheet" href="../js/layui-v2.5.7/layui/css/layui.css" media="all"/>
+</head>
+<body>
+    <ul class="layui-nav layui-nav-tree" lay-filter="test">
+        <!-- 侧边导航: <ul class="layui-nav layui-nav-tree layui-nav-side"> -->
+        <li class="layui-nav-item layui-nav-itemed">
+            <a href="javascript:;">默认展开</a>
+            <dl class="layui-nav-child" id="1">
+                <dd><a href="javascript:;">选项1</a></dd>
+                <dd><a href="javascript:;">选项2</a></dd>
+                <dd><a href="">跳转</a></dd>
+            </dl>
+        </li>
+
+        <li class="layui-nav-item"><a href="">大数据</a></li>
+    </ul>
+<!--    <div id="test" style="height: 800px">-->
+<!--        <div class="layui-row">-->
+<!--            asd-->
+<!--        </div>-->
+<!--        <div class="layui-row" style="height:800px">-->
+<!--            <div class="layui-col-md3">-->
+<!--&lt;!&ndash;                <ul class="layui-nav layui-nav-tree" >&ndash;&gt;-->
+
+<!--            </div>-->
+<!--            <div class="layui-col-md9">-->
+<!--                asd-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+</body>
+<script type="text/javascript">
+    layui.use(['layer','element'],function () {
+        let layer = layui.layer;
+        let element = layui.element;
+        let $ = layui.jquery;
+//加载侧边数据
+//         $.ajax({
+//            url:'/',
+//            success:function (data) {
+//
+//            }
+//         });
+        $('#1').append('<dd><a href="">电商平台</a></dd>');
+        //element.render();
+    });
+</script>
+</html>

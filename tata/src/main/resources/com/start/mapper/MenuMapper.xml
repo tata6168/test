@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.start.mapper.MenuMapper">
+<!--
+     void insert(Menu menu);
+    void update(Menu menu);
+  -->
+    <insert id="insert" parameterType="Menu" keyProperty="menuId" keyColumn="menu_id" useGeneratedKeys="true">
+        INSERT INTO t_menu(menu_name,path,status,parent_id,tab_name,sign)
+            VALUE(#{menuName},#{path},#{status},#{parentId},#{tabName},#{sign});
+    </insert>
+    <update id="update" parameterType="Menu" >
+        UPDATE t_menu
+        <set>
+            <if test="menuName!=null">menu_name = #{menuName},</if>
+            <if test="path!=null">path = #{path},</if>
+            <if test="parentId!=null">parent_id = #{parentId},</if>
+            <if test="tabName!=null and tabName!=''">tab_name =#{tabName}</if>
+            <if test="sign==1||sign==0||sign==-1">sign=#{sign}</if>
+        </set>
+        WHERE menu_id = #{menuId}
+    </update>
+<!--
+void roleAddMenu(IntermediateDate intermediateDate);
+void roleDeleteMenu(IntermediateDate intermediateDate);
+ -->
+    <insert id="roleAddMenu" parameterType="IntermediateDate">
+        INSERT INTO role_menu(role_id,menu_id) VALUES
+        <foreach collection="insert" item="i"  separator=",">
+            ( #{mainId} , #{i} )
+        </foreach>
+    </insert>
+    <delete id="roleDeleteMenu" parameterType="IntermediateDate">
+        DELETE FROM role_menu WHERE role_id=#{mainId},menu_id IN
+        <foreach collection="delete" item="i" open="(" separator="," close=")">
+            #{i}
+        </foreach>
+    </delete>
+<!--
+List<Menu> searchMenuJava(Long userId);
+List<Menu> searchMenuSql(Long userId);
+-->
+    <select id="searchMenuJava" parameterType="Long" resultType="Menu">
+--         SELECT * FROM t_menu WHERE menu_id IN (SELECT menu_id FROM  role_menu WHERE role_id IN (SELECT role_id FROM user_role WHERE user_id=#{userId}))
+        SELECT
+        m.menu_id menuId,
+        m.menu_name menuName,
+        m.parent_id parentId,
+        m.path path,
+        m.status status
+        FROM user_role ur
+        JOIN role_menu rm ON ur.role_id = rm.role_id
+        JOIN t_menu m ON rm.menu_id = m.menu_id
+        WHERE ur.user_id = #{userId}
+    </select>
+    <resultMap id="menuMap" type="Menu">
+        <id column="menu_id" property="menuId"/>
+    </resultMap>
+    <select id="searchMenuSql" parameterType="Long" resultMap="menuMap">
+        SELECT
+        m.menu_id menuId,
+        m.menu_name menuName,
+        m.parent_id parentId,
+        m.path path,
+        m.status status
+        FROM user_role ur
+        JOIN role_menu rm ON ur.role_id = rm.role_id
+        JOIN t_menu m ON rm.menu_id = m.menu_id,
+        JOIN t_menu ch ON ch.parent_id = m.menu_id
+        WHERE ur.user_id = #{userId}
+    </select>
+
+</mapper>
