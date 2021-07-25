@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>menuEdit</title>
+    <script type="text/javascript" src="../../layui-v2.6.8/layui/layui.js"></script>
+    <link rel="stylesheet" href="../../layui-v2.6.8/layui/css/layui.css">
+</head>
+<body oncontextmenu="return false;">
+<div id="test">111</div>
+    <div id="t"></div>
+    <div id="toolBar" style="display:none;background-color: #2D93CA">
+        <button type="button" data-id="edit" class="layui-btn layui-btn-xs" style="margin-left: -4px">编辑</button>
+        <button type="button" data-id="add" class="layui-btn layui-btn-xs" style="margin-left: -4px">添加</button>
+        <button type="button" data-id="del" class="layui-btn layui-btn-xs" style="margin-left: -4px">删除</button>
+    </div>
+    <div id="edit" style="display: none">
+        <form class="layui-form" lay-filter="menuInfoFilter">
+            <input name="menuId" style="display: none">
+            <div class="layui-form-item">
+                <label class="layui-form-label">按钮名</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="menuName" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">地址</label>
+                <div class="layui-input-block">
+                    <select name="path" >
+                        <option value="">选择地址</option>
+                        <optgroup id="skip" label="跳转地址">
+                        </optgroup>
+                        <optgroup id="functional" label="功能地址">
+                        </optgroup>
+                        <optgroup id="indeterminacy" label="未确定地址">
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">选项卡名</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="tabName" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-inline" style="width: 66px">
+                    <input type="checkbox" name="status" lay-skin="switch" lay-filter="statusFilter" lay-text="启用|禁用" >
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">按钮类别</label>
+                <div class="layui-input-block">
+                    <!--sign 1：页面跳转 0：待确定 -1：功能路径-->
+                    <input type="radio" name="sign" value="1" title="页面跳转">
+                    <input type="radio" name="sign" value="0" title="待确定" >
+                    <input type="radio" name="sign" value="-1" title="功能路径" >
+                    <input type="radio" name="sign" value="-2" title="父级菜单" >
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="childrenPopup" style="display: none">
+        <transfer></transfer>
+    </div>
+    <div id="addChildren" style="display: none">
+
+    </div>
+    <div id="addParent" style="display: none">
+
+    </div>
+    <div id="delInfo"></div>
+</body>
+<script>
+    layui.use(['tree','transfer','layer','form'],function(){
+        let all,menuId,ml,allPath=null,transfer=layui.transfer,tree = layui.tree,$=layui.jquery,form=layui.form,layer=layui.layer;
+        //菜单form 字段禁用
+        let disableSign={};
+        $.ajax({
+            url:'/page/allMenu',
+            type:'get',
+            async:false,
+            success:function (data) {
+                all=menuFormat(data);
+                ml = data;
+            }
+        });
+        //加载地址选择栏
+        $.ajax({
+            type:'get',
+            url:'/page/allPath',
+            async:false,
+            success:function (data) {
+                allPath=data;
+                let functional='',skip='',indeterminacy='';
+                for (let i = 0; i < data.length; i++) {
+                    let $d = data[i];
+                    switch ($d.sign) {
+                        case 1:
+                            skip+='<option value="'+$d.path+'">'+$d.path+'</option>';
+                            break;
+                        case 0:
+                            indeterminacy+='<option value="'+$d.path+'">'+$d.path+'</option>';
+                            break;
+                        case -1:
+                            functional+='<option value="'+$d.path+'">'+$d.path+'</option>';
+                            break;
+                    }
+                }
+                if(skip!='')
+                    $('#skip').append(skip);
+                if(functional!='')
+                    $('#functional').append(functional);
+                if(indeterminacy!='')
+                    $('#indeterminacy').append(indeterminacy);
+            }
+        });
+        //menu状态 switch
+        form.on('switch(statusFilter)',function(obj){
+            console.debug(this.value);
+        });
+        //清空form表单
+        function initForm(){
+            form.val('menuInfoFilter',{ menuId: "", menuName: "", sign:0, status:true , path: "", tabName: "" });
+        }
+        //渲染
+        let inst1 = tree.render({
+            elem: '#t',  //绑定元素
+            data:ml
+        });
+        //菜单右键事件
+        let upper,lower;
+        $(".layui-tree-set").mousedown(function(e){
+            if(3 == e.which){
+                let currentTarget = e.currentTarget;
+                menuId = currentTarget.attributes['data-id'].nodeValue;
+                let node = e.currentTarget.childNodes[0].childNodes[0];
+                let rect = node.getBoundingClientRect();
+                $('#toolBar').css({display:'block', position:"absolute" , left:rect.x+node.clientWidth, top:rect.y});
+                //获取上级菜单id e.currentTarget.parentElement.parentElement.attributes['data-id'];
+                upper=rect.y+rect.height;
+                lower=rect.y;
+            }
+            return false;
+        });
+        //光标从菜单移开
+        $(".layui-tree-set").mousemove(function (e) {
+            if(e.pageY>upper||e.pageY<lower)
+                $('#toolBar').css({display:'none'});
+        })
+        //点击事件
+        $('.layui-btn').click(function ()    {
+            let id = this.dataset.id;
+            let m = all[menuId];
+            switch(id){
+            //按钮信息更新
+                case 'edit':
+                    form.val('menuInfoFilter',m);
+                    layer.open({
+                        title:m.menuName,
+                        type: 1,
+                        content:$('#edit'),
+                        btn:['提交'],
+                        yes:function () {
+                            let submitData=form.val('menuInfoFilter');
+                        },success:function () {
+                            forbiddenField(m.sign);
+                        },cancel:function () {
+                            initForm();
+                            if(m.sign!=1)
+                        //恢复form中input禁用状态
+                            for (let i = 0; i < disableSign[m.sign].length; i++) {
+                                disableSign[m.sign][i].disabled=false;
+                            }
+                        }
+                    });
+                    break;
+                case 'add':
+                    layer.open({
+                        type:1,
+                        title:m.menuName,
+                        content: '<div>选择添加按钮类别</div>',
+                        btn:['功能/跳转','父级按钮'],
+                        yes:function(index){
+                            layer.open({
+                                title:m.menuName,
+                                type: 1,
+                                content:$('#edit'),
+                                btn:['提交'],
+                                yes:function () {
+                                    let submitData=form.val('menuInfoFilter');
+                                    $.ajax({
+                                       type:'get',
+                                       data:sendDataEquals(submitData,m),
+                                       url:'/page/menu/insertOrUpdate'
+                                    });
+                                },success:function () {
+                                    forbiddenField(m.sign);
+                                },cancel:function () {
+                                    if(m.sign!=1)
+                                    //恢复form中input禁用状态
+                                        for (let i = 0; i < disableSign[m.sign].length; i++) {
+                                            disableSign[m.sign][i].disabled=false;
+                                        }
+                                }
+                            });
+                            layer.close(index);
+                        },btn2:function(index){
+                            layer.open({
+                                title:m.menuName,
+                                type: 1,
+                                content:$('#edit'),
+                                btn:['提交'],
+                                yes:function () {
+                                    let submitData=form.val('menuInfoFilter');
+                                }
+                            });
+                            layer.close(index);
+                        },cancel:function () {
+                            initForm();
+                        }
+                    });
+                    break;
+                case 'del':
+                    layer.open({
+                        title:'确认删除菜单:'+m.menuName,
+                        type:1,
+                        content:$('#delInfo'),
+                        btn:['删除'],
+                        yes:function () {
+                            let data ={menuIds:[]} ;
+                            data.menuIds.push(menuId);
+                            if(m.childrenList.length)
+                                for (let i = 0; i < m.childrenList.length; i++) {
+                                    console.debug(m.childrenList[i]);
+                                    data.menuIds.push(m.childrenList[i]['menuId']);
+                                }
+                            console.debug(data);
+                            $.ajax({
+                               type:'delete',
+                               data:data,
+                               url:'/page/del/menu',
+                               traditional:true
+                            });
+                        }
+                    });
+                    break;
+                default:
+                    console.debug('id: '+ id +' unDefined case');
+            }
+        });
+        //禁用字段输入
+        function forbiddenField  (sign){
+            let $i = $('input');
+            switch (sign) {
+                case 1:
+                    //跳转菜单
+                    break;
+                case -1:
+                    //功能菜单
+                    if(disableSign[-1]===undefined) {
+                        disableSign[-1]=[];
+                        $i.each(function (index, element) {
+                            let name = element.name;
+                            if (name == 'tabName' || name == 'sign') {
+                                element.disabled = true;
+                                disableSign[-1].push(element);
+                            }
+                        });
+                    }else {
+                        for (let e in disableSign[-1]) {
+                            e.disable=true;
+                        }
+                    }
+                    break;
+                case -2:
+                    //父级菜单 tabName path sign
+                    if(disableSign[-2]===undefined) {
+                        disableSign[-2]=[];
+                        $i.each(function (index,element) {
+                            console.debug(element)
+                            let name = element.name;
+                            if(name=='tabName'||name=='path'||name=='sign')
+                                element.disabled=true;
+                                disableSign[-2].push(element);
+                        });
+                    }else {
+                        for (let e in disableSign[-1]) {
+                            e.disable=true;
+                        }
+                    }
+                    break;
+            }
+        }
+    });
+//菜单数据字段名格式化/菜单数据格式处理{menuId:menuObj}
+    function menuFormat(data,all){
+        if(!all) all={};
+        for (let i = 0; i < data.length; i++) {
+            let m=data[i];
+            all[m.menuId]=JSON.parse(JSON.stringify(m));
+            m['id']=m.menuId;
+            m['title'] = m.menuName;
+            menuFormat(m.childrenList,all);
+            m['children'] = m.childrenList;
+            delete m.menuId;
+            delete m.childrenList;
+            delete m.menuName;
+        }
+        return all;
+    }
+//修改比较结果发送
+    function sendDataEquals(newData,oldData) {
+        for (let key in oldData) {
+            if(oldData[key]==newData[key])
+                delete newData[key];
+        }
+        return newData;
+    }
+</script>
+</html>
