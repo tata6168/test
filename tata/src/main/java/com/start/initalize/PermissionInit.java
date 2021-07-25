@@ -1,6 +1,7 @@
 package com.start.initalize;
 
 import com.start.entity.*;
+import com.start.mapper.PathMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -18,7 +19,6 @@ import com.start.service.MenuService;
 import com.start.service.ShiroService;
 import com.start.util.UrlUtilBuilder;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +35,8 @@ public class PermissionInit implements ApplicationRunner {
     MenuService menuService;
     @Autowired
     UnifyMapper unifyMapper;
+    @Autowired
+    PathMapper pathMapper;
     @Override
     public void run(ApplicationArguments args) throws Exception {
         if(true) {
@@ -64,7 +66,7 @@ public class PermissionInit implements ApplicationRunner {
                 Method method = e.getValue().getMethod();
                 Class<?> declaringClass = method.getDeclaringClass();
                 /*
-                 * status 1：页面跳转 0：待确定 -1：功能路径
+                 * status 1：页面跳转 0：待确定 -1：功能路径 -2:父级菜单
                  * */
                 int status=1;
                 RestController rest = declaringClass.getDeclaredAnnotation(RestController.class);
@@ -72,7 +74,6 @@ public class PermissionInit implements ApplicationRunner {
                 ResponseBody body = method.getDeclaredAnnotation(ResponseBody.class);
                 Class<?> returnType = method.getReturnType();
                 if(returnType==ModelAndView.class){
-                    System.out.println(method.getName());
                     status=0;
                 }else if(rest!=null){
                     status=-1;
@@ -98,10 +99,12 @@ public class PermissionInit implements ApplicationRunner {
             Integer parentId = null;
             Menu mp = mL.get(0);
             menuService.insertOrUpdate(mp);
+           // pathMapper.insert(new Path(mp.getPath(),mp.isStatus(),mp.getSign()));
             parentId = mp.getMenuId();
             for (Menu c : mp.getChildrenList()) {
                 c.setParentId(parentId);
                 menuService.insertOrUpdate(c);
+                pathMapper.insert(new Path(c.getPath(),c.isStatus(),c.getSign()));
             }
 
             for (int i = 0; i < pL.size(); i++) {

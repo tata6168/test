@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.start.mapper.UserMapper">
+
+    <select id="roleAlls" resultMap="roleNameId" parameterType="Long">
+        SELECT role_id AS roleId,role_name AS roleName FROM t_role;
+    </select>
+    <resultMap id="roleNameId" type="NameId">
+        <result column="roleId" property="id" javaType="Integer"></result>
+        <result column="roleName" property="name" javaType="String"></result>
+    </resultMap>
+
+    <select id="searchUserRoleIdsTransfer" resultMap="roleAll" parameterType="Long">
+        SELECT u.user_id  userId,ur.role_id role_id
+        FROM
+        t_user u JOIN user_role ur ON u.user_id = ur.user_id
+        WHERE  u.user_id = 1
+    </select>
+    <resultMap id="roleAll"  type="TransferEntity" >
+        <id column="userId" property="id" ></id>
+        <collection property="ids" javaType="ArrayList" ofType="Integer">
+            <result column="role_id"></result>
+        </collection>
+        <collection   property="nameIdList" column="userId" javaType="ArrayList" select="roleAlls" ofType="NameId">
+        </collection>
+    </resultMap>
+
+
+
+    <select id="searchAllUser" parameterType="Query" resultType="User">
+        SELECT user_id userId,user_name userName,register_time registerTime,phone_num phoneNum FROM t_user LIMIT #{start},#{limit}
+    </select>
+    <select id="procedureUserRoleTransfer"  parameterType="Long" resultMap="roleAll" statementType="CALLABLE">
+        CALL user_role_transfer (#{userId,mode=IN})
+    </select>
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM t_user;
+    </select>
+
+    <insert id="insert" parameterType="User" useGeneratedKeys="true" keyColumn="user_id" keyProperty="userId">
+        INSERT INTO t_user(user_name,passwords,register_time,phone_num) VALUES(#{userName},#{passwords},NOW(),#{phoneNum})
+    </insert>
+    <update id="update" parameterType="User">
+        UPDATE t_user
+        <set>
+            <if test="userName!=null">user_name = #{userName},</if>
+            <if test="phoneNum!=null">phone_num = #{phoneNum}, </if>
+        </set>
+        WHERE user_id = #{userId}
+    </update>
+    <delete id="delete" parameterType="long">
+        DELETE FROM t_user WHERE user_id = #{userId};
+    </delete>
+    <delete id="deletes" parameterType="long">
+        DELETE FROM t_user WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+            #{userId}
+        </foreach>
+    </delete>
+    <select id="getRoleId" resultType="Integer" parameterType="Long">
+        SELECT role_id FROM user_role WHERE user_id = #{userId}
+    </select>
+
+    <!--
+         void deleteRole(IntermediateDate intermediateDate);
+    void insertRole(IntermediateDate intermediateDate);
+    -->
+    <insert id="insertRole" parameterType="IntermediateDate">
+        INSERT INTO user_role(user_id,role_id) VALUES <foreach collection="insert" item="i" separator=",">
+            (#{mainId},#{i})
+        </foreach>
+    </insert>
+    <delete id="deleteRole" parameterType="IntermediateDate">
+        DELETE FROM user_role WHERE user_id = #{mainId} AND role_id IN
+        <foreach collection="delete" item="d" open="(" separator="," close=")">
+            #{d}
+        </foreach>
+    </delete>
+
+    <select id="getPermissionSn" parameterType="Integer" resultType="Permission">
+        SELECT p.sn sn  FROM role_permission rp JOIN t_permission p ON rp.permission_id = p.permission_id
+        WHERE rp.role IN
+        <foreach collection="roleId" open="(" separator="," close=")" item="i">
+            #{i}
+        </foreach>
+    </select>
+
+    <resultMap id="menu" type="Menu">
+        <id column="menuId" property="menuId"/>
+        <result column="mpath" property="path"/>
+        <result column="menuName" property="menuName"/>
+        <result column="mtabName" property="tabName"/>
+        <result column="msign" property="sign"/>
+        <collection property="childrenList" ofType="Menu">
+            <id column="cmenuId" property="menuId"/>
+            <result column="ctabName" property="tabName"/>
+            <result column="cpath" property="path"></result>
+            <result column="cmenuName" property="menuName"/>
+            <result column="cparentId" property="parentId"/>
+            <result column="csign" property="sign"/>
+        </collection>
+    </resultMap>
+    <select id="getMenu" parameterType="Integer" resultMap="menu">
+        SELECT
+        m.menu_id menuId,
+        m.menu_name menuName,
+        m.path mpath,
+        m.tab_name mtabName,
+        m.sign sign,
+        c.tab_name ctabName,
+        c.sign csign,
+        c.parent_id cparentId,
+        c.menu_id cmenuId,
+        c.menu_name cmenuName,
+        c.path cpath
+        FROM
+        role_menu rm
+        JOIN t_menu m ON rm.menu_id = m.menu_id
+        JOIN t_menu c ON c.parent_id = m.menu_id
+        WHERE rm.role_id IN
+        <foreach collection="roleId" item="i" open="(" separator="," close=")">
+            #{i}
+        </foreach>
+    </select>
+
+
+
+
+
+
+
+</mapper>

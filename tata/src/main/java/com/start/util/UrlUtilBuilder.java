@@ -15,7 +15,7 @@ public class UrlUtilBuilder {
         map=data;
     }
     /*
-     * status 1：页面跳转 0：待确定 -1：功能路径
+     * status 1：页面跳转 0：待确定 -1：功能路径 -2:父级菜单
      * */
     public void urlTransitionShiro(String u,int status) throws Exception {
         if(u==null|u.length()==0){
@@ -57,16 +57,17 @@ public class UrlUtilBuilder {
             RoleDetails RoleDetails = new RoleDetails();
             //添加管理权限
             if(u. indexOf("/")!=-1) {
-               manager = new Permission();
-               manager.setSn(prefix+":*");
-               manager.setPermissionName(prefix+":*");
-               manager.setStatus(true);
-               parent = new Menu();
-               parent.setStatus(true);
-               parent.setMenuName(prefix);
-               parent.setSign(0);
-               RoleDetails.getMenuList().add(parent);
-               RoleDetails.getPermissionList().add(manager);
+                manager = new Permission();
+                manager.setSn(prefix+":*");
+                manager.setPermissionName(prefix+":*");
+                manager.setStatus(true);
+                parent = new Menu();
+                parent.setStatus(true);
+                parent.setMenuName(prefix);
+//父级菜单 sign为-2
+                parent.setSign(-2);
+                RoleDetails.getMenuList().add(parent);
+                RoleDetails.getPermissionList().add(manager);
             }
             RoleDetails.setRoleName(prefix);
             RoleDetails.getPermissionList().add(permission);

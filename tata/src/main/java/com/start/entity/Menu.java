@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Menu {
     /*
-     * sign 1：页面跳转 0：待确定 -1：功能路径
+     * status 1：页面跳转 0：待确定 -1：功能路径 -2:父级菜单
      * */
     int sign;
     Integer parentId;

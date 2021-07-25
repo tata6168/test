@@ -22,4 +22,8 @@ public class ForwardController {
     public String userTable(){
         return "table/user";
     }
+    @RequestMapping("edit/page")
+    public String pageEdit(){
+        return "page/menuEdit";
+    }
 }
