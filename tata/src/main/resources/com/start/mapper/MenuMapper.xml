@@ -74,4 +74,10 @@ List<Menu> searchMenuSql(Long userId);
     <select id="getAllMenu" resultType="Menu">
         SELECT menu_id menuId,menu_name menuName,tab_name tabName,path,sign,status,parent_id parentId FROM t_menu;
     </select>
+    <delete id="delBatchMenu" >
+        DELETE FROM t_menu WHERE menu_id IN
+        <foreach collection="array" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
 </mapper>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.server.mapper.TestMapper">
+    <insert id="addUser" parameterType="User" keyProperty="id" keyColumn="id" useGeneratedKeys="true">
+        INSERT INTO user (name,password,registerTime) VALUES (#{name},#{password},NOW());
+    </insert>
+    <!-- List<User> getAllData() -->
+    <select id="getAllData" resultType="User">
+        SELECT * FROM user
+    </select>
+    <!-- void updateUser(User user) -->
+    <update id="updateUser" parameterType="User" >
+        UPDATE user
+        <set>
+            <if test="name!=null and name!=''">
+                name=#{name},
+            </if>
+            <if test="password!=null and password != ''">
+                password = #{password},
+            </if>
+            <if test="status != null">
+                status = #{status}
+            </if>
+        </set>
+        WHERE
+        id = #{id}
+    </update>
+    <!--void whiteList(Long id)-->
+    <update id="whiteList" parameterType="Long" >
+        UPDATE user SET status = 1 WHERE id = #{id}
+    </update>
+    <!--void blackList(Long id)-->
+    <update id="blackList" parameterType="Long">
+        UPDATE user SET status = 0 WHERE id = #{id}
+    </update>
+    <!--void deleteUser(Long id)-->
+    <delete id="deleteUser" parameterType="Long">
+        DELETE FROM user WHERE id = #{id}
+    </delete>
+</mapper>

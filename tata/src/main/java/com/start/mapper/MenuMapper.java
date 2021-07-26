@@ -14,4 +14,6 @@ public interface MenuMapper {
     List<Menu> searchMenuSql(Long userId);
 
     List<Menu> getAllMenu();
+
+    void delBatchMenu(int[] menuIds);
 }

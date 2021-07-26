@@ -101,4 +101,9 @@ public class MenuServiceImpl implements MenuService {
     public List<Path> getAllPath() {
         return pathMapper.select();
     }
+
+    @Override
+    public void delMenu(int[] menuIds) {
+        menuMapper.delBatchMenu(menuIds);
+    }
 }

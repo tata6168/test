@@ -18,4 +18,5 @@ public interface MenuService {
 
     List<Menu> getAllMenu();
     List<Path> getAllPath();
+    void delMenu(int[] menuIds);
 }

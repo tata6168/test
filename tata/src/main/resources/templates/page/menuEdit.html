@@ -24,22 +24,17 @@
                 </div>
             </div>
             <div class="layui-form-item">
-                <label class="layui-form-label">选择框</label>
+                <label class="layui-form-label">地址</label>
                 <div class="layui-input-block">
-                    <select name="path" lay-verify="required">
-                        <option value=""></option>
-                        <option value="0">北京</option>
-                        <option value="1">上海</option>
-                        <option value="2">广州</option>
-                        <option value="3">深圳</option>
-                        <option value="4">杭州</option>
+                    <select name="path" >
+                        <option value="">选择地址</option>
+                        <optgroup id="skip" label="跳转地址">
+                        </optgroup>
+                        <optgroup id="functional" label="功能地址">
+                        </optgroup>
+                        <optgroup id="indeterminacy" label="未确定地址">
+                        </optgroup>
                     </select>
-                </div>
-            </div>
-            <div class="layui-form-item">
-                <label class="layui-form-label">路径</label>
-                <div class="layui-input-inline">
-                    <input type="text" name="path" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
                 </div>
             </div>
             <div class="layui-form-item">
@@ -75,6 +70,7 @@
     <div id="addParent" style="display: none">
 
     </div>
+    <div id="delInfo"></div>
 </body>
 <script>
     layui.use(['tree','transfer','layer','form'],function(){
@@ -90,10 +86,44 @@
                 ml = data;
             }
         });
+        //加载地址选择栏
+        $.ajax({
+            type:'get',
+            url:'/page/allPath',
+            async:false,
+            success:function (data) {
+                allPath=data;
+                let functional='',skip='',indeterminacy='';
+                for (let i = 0; i < data.length; i++) {
+                    let $d = data[i];
+                    switch ($d.sign) {
+                        case 1:
+                            skip+='<option value="'+$d.path+'">'+$d.path+'</option>';
+                            break;
+                        case 0:
+                            indeterminacy+='<option value="'+$d.path+'">'+$d.path+'</option>';
+                            break;
+                        case -1:
+                            functional+='<option value="'+$d.path+'">'+$d.path+'</option>';
+                            break;
+                    }
+                }
+                if(skip!='')
+                    $('#skip').append(skip);
+                if(functional!='')
+                    $('#functional').append(functional);
+                if(indeterminacy!='')
+                    $('#indeterminacy').append(indeterminacy);
+            }
+        });
         //menu状态 switch
         form.on('switch(statusFilter)',function(obj){
             console.debug(this.value);
         });
+        //清空form表单
+        function initForm(){
+            form.val('menuInfoFilter',{ menuId: "", menuName: "", sign:0, status:true , path: "", tabName: "" });
+        }
         //渲染
         let inst1 = tree.render({
             elem: '#t',  //绑定元素
@@ -137,6 +167,7 @@
                         },success:function () {
                             forbiddenField(m.sign);
                         },cancel:function () {
+                            initForm();
                             if(m.sign!=1)
                         //恢复form中input禁用状态
                             for (let i = 0; i < disableSign[m.sign].length; i++) {
@@ -152,15 +183,6 @@
                         content: '<div>选择添加按钮类别</div>',
                         btn:['功能/跳转','父级按钮'],
                         yes:function(index){
-                            if(allPath===null)
-                                $.ajax({
-                                    type:'get',
-                                    url:'/page/allPath',
-                                    async:false,
-                                    success:function (data) {
-                                        allPath=data;
-                                    }
-                                });
                             layer.open({
                                 title:m.menuName,
                                 type: 1,
@@ -195,16 +217,40 @@
                                 }
                             });
                             layer.close(index);
+                        },cancel:function () {
+                            initForm();
                         }
                     });
                     break;
                 case 'del':
+                    layer.open({
+                        title:'确认删除菜单:'+m.menuName,
+                        type:1,
+                        content:$('#delInfo'),
+                        btn:['删除'],
+                        yes:function () {
+                            let data ={menuIds:[]} ;
+                            data.menuIds.push(menuId);
+                            if(m.childrenList.length)
+                                for (let i = 0; i < m.childrenList.length; i++) {
+                                    console.debug(m.childrenList[i]);
+                                    data.menuIds.push(m.childrenList[i]['menuId']);
+                                }
+                            console.debug(data);
+                            $.ajax({
+                               type:'delete',
+                               data:data,
+                               url:'/page/del/menu',
+                               traditional:true
+                            });
+                        }
+                    });
                     break;
                 default:
                     console.debug('id: '+ id +' unDefined case');
             }
         });
-
+        //禁用字段输入
         function forbiddenField  (sign){
             let $i = $('input');
             switch (sign) {
@@ -244,7 +290,6 @@
                             e.disable=true;
                         }
                     }
-
                     break;
             }
         }
@@ -265,6 +310,7 @@
         }
         return all;
     }
+//修改比较结果发送
     function sendDataEquals(newData,oldData) {
         for (let key in oldData) {
             if(oldData[key]==newData[key])
@@ -272,6 +318,5 @@
         }
         return newData;
     }
-
 </script>
 </html>

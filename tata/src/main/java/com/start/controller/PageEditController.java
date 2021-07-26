@@ -4,6 +4,7 @@ import com.start.entity.Menu;
 import com.start.entity.Path;
 import com.start.service.MenuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,5 +28,9 @@ public class PageEditController {
     @GetMapping("allPath")
     public List<Path> getAllPath(){
         return menuService.getAllPath();
+    }
+    @DeleteMapping("del/menu")
+    public void delMenu(int[] menuIds){
+        menuService.delMenu(menuIds);
     }
 }
