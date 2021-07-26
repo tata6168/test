@@ -26,7 +26,7 @@
             <div class="layui-form-item">
                 <label class="layui-form-label">地址</label>
                 <div class="layui-input-block">
-                    <select name="path" >
+                    <select id="path" name="path" >
                         <option value="">选择地址</option>
                         <optgroup id="skip" label="跳转地址">
                         </optgroup>
@@ -46,7 +46,7 @@
             <div class="layui-form-item">
                 <label class="layui-form-label">状态</label>
                 <div class="layui-input-inline" style="width: 66px">
-                    <input type="checkbox" name="status" lay-skin="switch" lay-filter="statusFilter" lay-text="启用|禁用" >
+                    <input lay-filter="statusFilter" lay-skin="switch" lay-text="启用|禁用" name="status" type="checkbox" value="true" >
                 </div>
             </div>
             <div class="layui-form-item">
@@ -162,8 +162,21 @@
                         type: 1,
                         content:$('#edit'),
                         btn:['提交'],
-                        yes:function () {
+                        yes:function (index) {
                             let submitData=form.val('menuInfoFilter');
+                            console.debug(submitData)
+                            let equals = sendDataEquals(submitData, m);
+                            console.debug(equals)
+                            if(JSON.stringify(submitData)!='{}') {
+                                $.ajax({
+                                    type: 'get',
+                                    url: '/page/menu/insertOrUpdate',
+                                    data: equals
+                                });
+                            }else {
+                                alert('未有数据发生修改！')
+                            }
+                            layer.close(index);
                         },success:function () {
                             forbiddenField(m.sign);
                         },cancel:function () {
@@ -188,36 +201,49 @@
                                 type: 1,
                                 content:$('#edit'),
                                 btn:['提交'],
-                                yes:function () {
+                                yes:function (index) {
                                     let submitData=form.val('menuInfoFilter');
+                                    submitData['parentId']=m.menuId;
                                     $.ajax({
                                        type:'get',
-                                       data:sendDataEquals(submitData,m),
+                                       data:submitData,
                                        url:'/page/menu/insertOrUpdate'
                                     });
+                                    layer.close(index);
                                 },success:function () {
-                                    forbiddenField(m.sign);
+                                    forbiddenField(2);
                                 },cancel:function () {
-                                    if(m.sign!=1)
                                     //恢复form中input禁用状态
-                                        for (let i = 0; i < disableSign[m.sign].length; i++) {
-                                            disableSign[m.sign][i].disabled=false;
-                                        }
+                                    for (let i = 0; i < disableSign[2].length; i++) {
+                                        disableSign[2][i].disabled=false;
+                                    }
                                 }
                             });
                             layer.close(index);
                         },btn2:function(index){
+                            form.val('menuInfoFilter',{sign:-2});
+                            forbiddenField(-2);
                             layer.open({
                                 title:m.menuName,
                                 type: 1,
                                 content:$('#edit'),
                                 btn:['提交'],
-                                yes:function () {
+                                yes:function (index) {
                                     let submitData=form.val('menuInfoFilter');
+                                    submitData['parentId']=m.menuId;
+                                    $.ajax({
+                                        data:submitData,
+                                        type:'get',
+                                        url:'/page/menu/insertOrUpdate',
+                                    });
+                                    layer.close(index);
                                 }
                             });
                             layer.close(index);
                         },cancel:function () {
+                            for (let i = 0; i <disableSign[-2].length ; i++) {
+                                disableSign[-2][i].disabled=false;
+                            }
                             initForm();
                         }
                     });
@@ -233,7 +259,6 @@
                             data.menuIds.push(menuId);
                             if(m.childrenList.length)
                                 for (let i = 0; i < m.childrenList.length; i++) {
-                                    console.debug(m.childrenList[i]);
                                     data.menuIds.push(m.childrenList[i]['menuId']);
                                 }
                             console.debug(data);
@@ -254,6 +279,24 @@
         function forbiddenField  (sign){
             let $i = $('input');
             switch (sign) {
+                case 2:
+                    //添加功能跳转菜单
+                    if(disableSign[2]===undefined) {
+                        disableSign[2]=[];
+                        $i.each(function (index, element) {
+                            let name = element.name;
+                            let value = element.value;
+                            if (name == 'sign'&&(value==-2||value==0)) {
+                                element.disabled = true;
+                                disableSign[2].push(element);
+                            }
+                        });
+                    }else {
+                        for (let e in disableSign[2]) {
+                            e.disable=true;
+                        }
+                    }
+                    break;
                 case 1:
                     //跳转菜单
                     break;
@@ -279,12 +322,16 @@
                     if(disableSign[-2]===undefined) {
                         disableSign[-2]=[];
                         $i.each(function (index,element) {
-                            console.debug(element)
                             let name = element.name;
                             if(name=='tabName'||name=='path'||name=='sign')
                                 element.disabled=true;
                                 disableSign[-2].push(element);
                         });
+                        $('#path').each(function (index,element) {
+                            element.disabled = true;
+                            disableSign[-2].push(element);
+                            form.render('select','menuInfoFilter');
+                        })
                     }else {
                         for (let e in disableSign[-1]) {
                             e.disable=true;
@@ -312,8 +359,13 @@
     }
 //修改比较结果发送
     function sendDataEquals(newData,oldData) {
-        for (let key in oldData) {
-            if(oldData[key]==newData[key])
+        for (let key in newData) {
+            if(key=='menuId') continue;
+            if(newData[key]==='true')
+                newData[key]=true
+            if(newData[key]==='false')
+                newData[key]=false
+            if(oldData[key]==newData[key]||((newData[key]==''||newData[key]==null)&&(newData[key]==''||newData[key]==null)))
                 delete newData[key];
         }
         return newData;
