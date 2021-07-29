@@ -1,5 +1,6 @@
 package com.start.service.impl;
 
+import com.start.cache.RoleSnCache;
 import com.start.entity.*;
 import com.start.mapper.*;
 import com.start.service.ShiroService;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional(readOnly = true,propagation = Propagation.SUPPORTS)
@@ -22,6 +24,26 @@ public class ShiroServiceImpl implements ShiroService {
     RoleMapper roleMapper;
     @Autowired
     UnifyMapper unifyMapper;
+
+    @Override
+    public Set<String> roleIdGetSn(Integer roleId) {
+        if(RoleSnCache.ROLE_ID_SN.containsKey(roleId)) {
+            return RoleSnCache.ROLE_ID_SN.get(roleId);
+        }else {
+             roleMapper.roleIdGetSn(roleId);
+            return null;
+        }
+    }
+
+    @Override
+    public List<RoleDetails> shiroSnInit() {
+        return roleMapper.shiroInit();
+    }
+
+    @Override
+    public LogInfo Login(String userId) {
+        return userMapper.getLogInfoById(userId);
+    }
 
     @Override
     public void permissionInsertOrUpdate(Permission permission) {

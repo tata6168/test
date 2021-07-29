@@ -4,6 +4,10 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.start.mapper.UserMapper">
 
+    <!-- LogInfo getLogInfoById(String userId); -->
+    <select id="getLogInfoById" parameterType="String" resultType="LogInfo">
+        SELECT user_name userName,passwords,role_id roleId FROM t_user WHERE user_id=#{userId};
+    </select>
     <select id="roleAlls" resultMap="roleNameId" parameterType="Long">
         SELECT role_id AS roleId,role_name AS roleName FROM t_role;
     </select>

@@ -39,7 +39,7 @@ public class PermissionInit implements ApplicationRunner {
     PathMapper pathMapper;
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        if(true) {
+        if(false) {
             developPermissionIMenuInit();
         }
     }

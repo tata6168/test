@@ -46,7 +46,8 @@
             <div class="layui-form-item">
                 <label class="layui-form-label">状态</label>
                 <div class="layui-input-inline" style="width: 66px">
-                    <input lay-filter="statusFilter" lay-skin="switch" lay-text="启用|禁用" name="status" type="checkbox" value="true" >
+                    <input lay-filter="statusFilter" lay-skin="switch" lay-text="启用|禁用" name="status"
+                           type="checkbox" value="true" >
                 </div>
             </div>
             <div class="layui-form-item">
@@ -116,10 +117,6 @@
                     $('#indeterminacy').append(indeterminacy);
             }
         });
-        //menu状态 switch
-        form.on('switch(statusFilter)',function(obj){
-            console.debug(this.value);
-        });
         //清空form表单
         function initForm(){
             form.val('menuInfoFilter',{ menuId: "", menuName: "", sign:0, status:true , path: "", tabName: "" });
@@ -148,11 +145,15 @@
         $(".layui-tree-set").mousemove(function (e) {
             if(e.pageY>upper||e.pageY<lower)
                 $('#toolBar').css({display:'none'});
-        })
+        });
         //点击事件
         $('.layui-btn').click(function ()    {
             let id = this.dataset.id;
-            let m = all[menuId];
+            let m = all[menuId],status;
+
+            form.on('switch(statusFilter)',function (elem) {
+                status=elem.elem.checked;
+            });
             switch(id){
             //按钮信息更新
                 case 'edit':
@@ -164,9 +165,9 @@
                         btn:['提交'],
                         yes:function (index) {
                             let submitData=form.val('menuInfoFilter');
-                            console.debug(submitData)
+                            if(status!=undefined)
+                                submitData.status=status;
                             let equals = sendDataEquals(submitData, m);
-                            console.debug(equals)
                             if(JSON.stringify(submitData)!='{}') {
                                 $.ajax({
                                     type: 'get',
@@ -204,6 +205,8 @@
                                 yes:function (index) {
                                     let submitData=form.val('menuInfoFilter');
                                     submitData['parentId']=m.menuId;
+                                    if(status!=undefined)
+                                        submitData.status=status;
                                     $.ajax({
                                        type:'get',
                                        data:submitData,

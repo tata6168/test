@@ -12,8 +12,6 @@ public interface MenuMapper {
     void roleDeleteMenu(IntermediateDate intermediateDate);
     List<Menu> searchMenuJava(Long userId);
     List<Menu> searchMenuSql(Long userId);
-
     List<Menu> getAllMenu();
-
     void delBatchMenu(int[] menuIds);
 }

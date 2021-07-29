@@ -2,6 +2,8 @@ package com.start.configuration;
 
 import com.start.cache.RoleSnCache;
 import com.start.entity.LogInfo;
+import com.start.entity.Role;
+import com.start.entity.RoleDetails;
 import com.start.service.ShiroService;
 import com.start.util.UserPasswordsEncrypt;
 import org.apache.shiro.SecurityUtils;
@@ -15,14 +17,12 @@ import org.apache.shiro.realm.Realm;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.ByteSource;
-import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.HashMap;
+import java.util.*;
 
 @Configuration
 public class ShiroConfig {
@@ -38,7 +38,7 @@ public class ShiroConfig {
         return matcher;
     }
 
-    @Bean("AuthorizingRealm")
+    @Bean("authorizingRealm")
     public Realm realm(@Qualifier("credentialsMatcher") HashedCredentialsMatcher matcher){
         AuthorizingRealm authorizingRealm = new AuthorizingRealm() {
             @Override
@@ -55,7 +55,7 @@ public class ShiroConfig {
                 String username = token.getUsername();
                 LogInfo login = shiroService.Login(username);
                 if (login == null) return null;
-                //注入sn
+            //注入sn 缓存中获取
                 login.setSnSet(RoleSnCache.ROLE_ID_SN.get(login.getRoleId()));
                 ByteSource source = ByteSource.Util.bytes(UserPasswordsEncrypt.SALT);
                 SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(username, login, source, REALM_NAME);
@@ -71,29 +71,33 @@ public class ShiroConfig {
         return authorizingRealm;
     }
     @Bean("DefaultWebSecurityManager")
-    public DefaultWebSecurityManager securityManager(@Qualifier("AuthorizingRealm")Realm realm){
+    public DefaultWebSecurityManager securityManager(@Qualifier("authorizingRealm")Realm realm){
         DefaultWebSecurityManager manager = new DefaultWebSecurityManager();
         manager.setRealm(realm);
         return manager;
 
     }
-    @Bean("ShiroFilterFactoryBean")
-    public ShiroFilterFactoryBean getShiroFilterFactoryBean(@Qualifier("DefaultWebSecurityManager") DefaultWebSecurityManager securityManager){
+    @Bean("shiroFilterFactoryBean")
+    public ShiroFilterFactoryBean getShiroFilterFactoryBean(@Qualifier("DefaultWebSecurityManager")DefaultWebSecurityManager manager){
         ShiroFilterFactoryBean factoryBean = new ShiroFilterFactoryBean();
-        factoryBean.setSecurityManager(securityManager);
+        factoryBean.setSecurityManager(manager);
 
-        factoryBean.setSuccessUrl("/success");
-        factoryBean.setLoginUrl("/login");
         HashMap<String, String> map = new HashMap<>();
-        int count = shiroService.roleMapperCount();
-//        shiroService.
-        //map.put("/**","anon");
-//        shiroService.
-//        List<Permission> permissions = permissionService.baseSearchAll();
-//        permissions.forEach(e->{
-//            if(e.getPath()!=null&&e.getPath()!="")
-//                map.put(e.getPath(),"perms["+e.getSn()+"]");
-//        });
+        List<RoleDetails> roleDetails = shiroService.shiroSnInit();
+//角色id，sn缓存map
+        for (RoleDetails role : roleDetails) {
+            Map<Integer, Set<String>> roleIdSn = RoleSnCache.ROLE_ID_SN;
+            Integer roleId = role.getRoleId();
+            if(!roleIdSn.containsKey(roleId)){
+                roleIdSn.put(roleId,new HashSet<String>());
+            }
+            role.getPermissionList().forEach(e->{
+                roleIdSn.get(roleId).add(e.getSn());
+                if(e.getPath()!=null&&e.getPath()!="")
+                    map.put(e.getPath(),"perms["+e.getSn()+"]");
+            });
+        }
+
         factoryBean.setFilterChainDefinitionMap(map);
         return factoryBean;
     }

@@ -34,4 +34,6 @@ public interface UserMapper {
     List<Permission> getPermission(List<Integer> roleId);
 
     List<Menu> getMenu(@Param("roleId") List<Integer> roleId);
+
+    LogInfo getLogInfoById(String userId);
 }

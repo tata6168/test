@@ -1,11 +1,19 @@
 package com.start.service;
 
+import com.start.cache.RoleSnCache;
 import com.start.entity.*;
 import com.start.util.ResultJson;
 
 import java.util.List;
+import java.util.Set;
 
 public interface ShiroService {
+    /*
+    * 根据角色Id，到Map RoleSnCache.ROLE_ID_SN 获取Sn 如过没有就查询然后添加到缓存中
+    * */
+    Set<String> roleIdGetSn(Integer roleId);
+    List<RoleDetails> shiroSnInit();
+    LogInfo Login(String userId);
     void permissionInsertOrUpdate(Permission permission);
     void roleInsertOrUpdate(Role role);
     void addUser(User user);
