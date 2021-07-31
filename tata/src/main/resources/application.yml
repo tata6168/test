@@ -9,7 +9,8 @@ spring:
   thymeleaf:
     cache: false
 mybatis:
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#  configuration:
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   type-aliases-package: com.start.entity
   mapper-locations: com/start/mapper/**Mapper.xml
+  config-location: classpath:mybatis.xml

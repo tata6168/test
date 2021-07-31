@@ -34,7 +34,7 @@ public class ShiroConfig {
     public HashedCredentialsMatcher credentialsMatcher(){
         HashedCredentialsMatcher matcher = new HashedCredentialsMatcher();
         matcher.setHashAlgorithmName("MD5");
-        matcher.setHashIterations(10);
+        matcher.setHashIterations(UserPasswordsEncrypt.ITERATOR);
         return matcher;
     }
 
@@ -55,10 +55,8 @@ public class ShiroConfig {
                 String username = token.getUsername();
                 LogInfo login = shiroService.Login(username);
                 if (login == null) return null;
-            //注入sn 缓存中获取
-                login.setSnSet(RoleSnCache.ROLE_ID_SN.get(login.getRoleId()));
                 ByteSource source = ByteSource.Util.bytes(UserPasswordsEncrypt.SALT);
-                SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(username, login, source, REALM_NAME);
+                SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(login, login.getPasswords(), source, REALM_NAME);
                 return info;
             }
 
@@ -81,7 +79,8 @@ public class ShiroConfig {
     public ShiroFilterFactoryBean getShiroFilterFactoryBean(@Qualifier("DefaultWebSecurityManager")DefaultWebSecurityManager manager){
         ShiroFilterFactoryBean factoryBean = new ShiroFilterFactoryBean();
         factoryBean.setSecurityManager(manager);
-
+        factoryBean.setLoginUrl("/login.html");
+        factoryBean.setSuccessUrl("/forward/main");
         HashMap<String, String> map = new HashMap<>();
         List<RoleDetails> roleDetails = shiroService.shiroSnInit();
 //角色id，sn缓存map
@@ -97,7 +96,8 @@ public class ShiroConfig {
                     map.put(e.getPath(),"perms["+e.getSn()+"]");
             });
         }
-
+        map.put("/test.html","anon");
+        map.put("/user/login","anon");
         factoryBean.setFilterChainDefinitionMap(map);
         return factoryBean;
     }

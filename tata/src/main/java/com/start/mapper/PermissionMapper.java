@@ -22,4 +22,8 @@ public interface PermissionMapper {
     void sst(@Param("permissionId") Integer permissionId,@Param("status") Boolean status);
 
     void update(PerModifiable map);
+/*
+* 可以作存储过程
+* */
+    void delete(Integer permissionId);
 }

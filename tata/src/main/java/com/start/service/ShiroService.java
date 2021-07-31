@@ -1,6 +1,5 @@
 package com.start.service;
 
-import com.start.cache.RoleSnCache;
 import com.start.entity.*;
 import com.start.util.ResultJson;
 
@@ -14,14 +13,14 @@ public interface ShiroService {
     Set<String> roleIdGetSn(Integer roleId);
     List<RoleDetails> shiroSnInit();
     LogInfo Login(String userId);
-    void permissionInsertOrUpdate(Permission permission);
-    void roleInsertOrUpdate(Role role);
-    void addUser(User user);
+    Long permissionInsertOrUpdate(Permission permission);
+    long roleInsertOrUpdate(Role role);
+    Long addUser(User user) throws Exception;
 
     void updateRole(RoleDetails roleDetails);
-    void deleteRole(Integer roleId);
+    Long deleteRole(Integer roleId);
 
-    void deletePermission(Integer permissionId);
+    Long deletePermission(Integer permissionId);
 
 
     void userUpdateRole(IntermediateDate intermediateDate);
@@ -39,7 +38,7 @@ public interface ShiroService {
     int roleMapperCount();
     long userCount();
 
-    void userInsertOrUpdate(User user);
+    Long userInsertOrUpdate(User user);
 
     void userDelete(long userId);
     void userDeletes(long[] userIds);

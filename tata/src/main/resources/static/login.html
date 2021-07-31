@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <script src="layui-v2.6.8/layui/layui.js"></script>
+    <link href="layui-v2.6.8/layui/css/layui.css" rel="stylesheet">
+</head>
+<form action="" class="layui-form" id="userInfoId" lay-filter="loginFilter">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">userName</label>
+            <div class="layui-input-inline">
+                <input autocomplete="off" class="layui-input" name="userId" type="tel">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">passwords</label>
+            <div class="layui-input-inline">
+                <input autocomplete="off" class="layui-input" name="passwords" type="tel">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-filter="demo1" lay-submit="" type="submit">Login</button>
+            <button class="layui-btn" lay-filter="register" lay-submit="" type="submit">Register</button>
+        </div>
+    </div>
+</form>
+<div id="userInfoPopup" style="display: none">
+    <form class="layui-form" lay-filter="userInfoFilter"> <!-- 提示：如果你不想用form，你可以换成div等任何一个普通元素 -->
+        <div class="layui-form-item">
+            <label class="layui-form-label">PhoneNumber</label>
+            <div class="layui-input-inline">
+                <input autocomplete="off" class="layui-input" name="phoneNum" placeholder="please enter" type="text">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Passwords</label>
+            <div class="layui-input-inline">
+                <input autocomplete="off" class="layui-input" name="passwords" placeholder="please enter" type="text">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">UserName</label>
+            <div class="layui-input-inline">
+                <input autocomplete="off" class="layui-input" name="userName" placeholder="please enter" type="text">
+            </div>
+        </div>
+    </form>
+</div>
+<body>
+    <script type="text/javascript">
+        let $ =  layui.jquery;
+        let use = layui.use(['form','layer'],function(){
+            let form=layui.form,layer=layui.layer;
+            form.on('submit(demo1)',function(data){
+                console.debug(form.val('loginFilter'))
+                $.ajax({
+                    url:"/user/login",
+                    type:"get",
+                    data:form.val('loginFilter')
+                });
+                return false;
+            });
+            form.on("submit(register)",function () {
+                layer.open({
+                    title:"User Register",
+                    type:1,
+                    content:$("#userInfoPopup"),
+                    btn:['Submit'],
+                    yes:function(index){
+                        let data = form.val('userInfoFilter');
+                        $.ajax({
+                           url:'user/register',
+                           type:'put',
+                           success:function (data) {
+                               
+                           } 
+                        });
+                    }
+                })
+               return false;
+            });
+        });
+        function formAlignCenter(){
+            let width = $(document.body).width();
+            let height = $(document).height();
+            let formWidth = null;
+            $('#userInfoId').find(".layui-inline").each(function (index,elem) {
+                console.debug(elem);
+                console.debug(elem.scrollWidth);
+                if (formWidth==null) {
+                    formWidth = elem.clientWidth;
+                }else {
+                    if(elem.clientWidth>formWidth){
+                        formWidth = elem.clientWidth;
+                    }
+                }
+
+            });
+            $('#userInfoId').css({position:'absolute',left:(width-formWidth+10)/2,top:(height-$('#userInfoId').height())/2});
+        };
+        formAlignCenter();
+    </script>
+</body>
+</html>

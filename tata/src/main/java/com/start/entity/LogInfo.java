@@ -41,4 +41,14 @@ public class LogInfo {
     public void setPasswords(String passwords) {
         this.passwords = passwords;
     }
+
+    @Override
+    public String toString() {
+        return "LogInfo{" +
+                "userId='" + userId + '\'' +
+                ", passwords='" + passwords + '\'' +
+                ", roleId=" + roleId +
+                ", snSet=" + snSet +
+                '}';
+    }
 }

@@ -19,11 +19,8 @@ public interface RoleMapper {
     void insert(Role role);
     void update(Role role);
     void delete(Integer roleId);
-
     long count();
     List<NameId> transfer();
-
     List<Integer> getPermissionIds(Integer roleId);
-
     RoleDetails roleIdGetSn(Integer roleId);
 }

@@ -1,15 +1,26 @@
 package com.start.entity;
 
+import com.start.util.UserPasswordsEncrypt;
+
+import java.io.Serializable;
 import java.util.Date;
 
-public class User {
+public class User implements Serializable {
     Long userId;
     String userName;
     String passwords;
     Date registerTime;
     Boolean status;
+    Integer roleId;
     String phoneNum;
 
+    public Integer getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(Integer roleId) {
+        this.roleId = roleId;
+    }
 
     public Boolean getStatus() {
         return status;
@@ -40,7 +51,7 @@ public class User {
     }
 
     public void setPasswords(String passwords) {
-        this.passwords = passwords;
+        this.passwords = UserPasswordsEncrypt.Encrypt(passwords);
     }
 
     public Date getRegisterTime() {

@@ -4,8 +4,10 @@ import com.start.cache.RoleSnCache;
 import com.start.entity.*;
 import com.start.mapper.*;
 import com.start.service.ShiroService;
+import com.start.service.UnifyService;
 import com.start.util.ResultJson;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ public class ShiroServiceImpl implements ShiroService {
     RoleMapper roleMapper;
     @Autowired
     UnifyMapper unifyMapper;
+    @Autowired
+    UnifyService unifyService;
 
     @Override
     public Set<String> roleIdGetSn(Integer roleId) {
@@ -42,32 +46,52 @@ public class ShiroServiceImpl implements ShiroService {
 
     @Override
     public LogInfo Login(String userId) {
-        return userMapper.getLogInfoById(userId);
+        LogInfo info = userMapper.getLogInfoById(userId);
+        if(info==null) return null;
+        if(info.getRoleId()==null){
+            RoleSnCache.ROLE_ID_SN.entrySet().forEach(e->info.getSnSet().addAll(e.getValue()));
+        }else {
+            info.setSnSet(RoleSnCache.ROLE_ID_SN.get(info.getRoleId()));
+        }
+        return info;
     }
 
     @Override
-    public void permissionInsertOrUpdate(Permission permission) {
+    @CachePut(cacheNames = "count",key = "'t_permission'",condition = "#permission.permissionId==null")
+    public Long permissionInsertOrUpdate(Permission permission) {
         Integer permissionId = permission.getPermissionId();
+        Long count=null;
         if(permissionId==null){
             permissionMapper.insert(permission);
+            count=unifyService.count("t_permission")+1;
         }else {
             permissionMapper.update(permission);
         }
+        return count;
     }
 
     @Override
-    public void roleInsertOrUpdate(Role role) {
+    @CachePut(cacheNames = "count",key = "'t_role'",condition = "#role.roleId==null")
+    public long roleInsertOrUpdate(Role role) {
         Integer roleId = role.getRoleId();
+        long count=0l;
         if(roleId==null){
+            count=unifyService.count("t_role")+1;
             roleMapper.insert(role);
         }else {
             roleMapper.update(role);
         }
+        return count;
     }
 
     @Override
-    public void addUser(User user) {
+    @CachePut(cacheNames = "count",key = "'t_user'")
+    public Long addUser(User user) throws Exception {
+        if(RoleSnCache.registerInitRoleId==null)
+            throw new Exception("Parameter RoleSnCache.registerInitRoleId is Null");
+        user.setRoleId(RoleSnCache.registerInitRoleId);
         userMapper.insert(user);
+        return unifyService.count("t_user")+1;
     }
 
     @Override
@@ -76,15 +100,19 @@ public class ShiroServiceImpl implements ShiroService {
     }
 
     @Override
-    public void deleteRole(Integer roleId) {
+    @CachePut(cacheNames = "count",key = "'t_role'")
+    public Long deleteRole(Integer roleId) {
         roleMapper.delete(roleId);
         if(roleMapper.searchPermissionCount(roleId)>0)
             roleMapper.deleteAllPermission(roleId);
+        return unifyService.count("t_role")-1;
     }
 
     @Override
-    public void deletePermission(Integer permissionId) {
-
+    @CachePut(cacheNames = "count",key = "'t_permission'")
+    public Long deletePermission(Integer permissionId) {
+        permissionMapper.delete(permissionId);
+        return unifyService.count("t_permission");
     }
 
     @Override
@@ -162,12 +190,14 @@ public class ShiroServiceImpl implements ShiroService {
     }
 
     @Override
-    public void userInsertOrUpdate(User user) {
+    @CachePut(key = "'t_user'",cacheNames = "count",condition = "#user.userId==null")
+    public Long userInsertOrUpdate(User user) {
         if(user.getUserId()==null){
             userMapper.insert(user);
         }else {
             userMapper.update(user);
         }
+        return unifyService.count("t_user")+1;
     }
 
     @Override

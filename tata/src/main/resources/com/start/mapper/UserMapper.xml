@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.start.mapper.UserMapper">
-
+    <cache></cache>
     <!-- LogInfo getLogInfoById(String userId); -->
     <select id="getLogInfoById" parameterType="String" resultType="LogInfo">
         SELECT user_name userName,passwords,role_id roleId FROM t_user WHERE user_id=#{userId};
